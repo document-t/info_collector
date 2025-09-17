@@ -6,7 +6,7 @@ from collectors.system_monitor import SystemMonitor
 from storage.key_manager import KeyManager
 from storage.encryptor import DataEncryptor
 from storage.local_database import LocalDatabase
-from logging.log_manager import LogManager
+from log.log_manager import LogManager
 from ui.dashboard import Dashboard
 from ui.login_dialog import LoginDialog
 
