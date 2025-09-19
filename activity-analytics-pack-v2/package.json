@@ -1,0 +1,58 @@
+{
+  "name": "activity-analytics-hybrid",
+  "version": "1.0.0",
+  "description": "Electron + Native DLL system monitoring hybrid application",
+  "main": "dist/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build && electron-builder",
+    "dll": "cd native && msbuild monitor.sln /p:Configuration=Release /p:Platform=x64 && cd ..",
+    "start": "npm run dll && electron .",
+    "sign": "node scripts/sign.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^8.6.0",
+    "electron-log": "^4.4.8"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.4",
+    "@types/node": "^18.17.1",
+    "@vitejs/plugin-vue": "^4.2.3",
+    "electron": "^25.8.1",
+    "electron-builder": "^24.6.4",
+    "electron-vite": "^1.0.27",
+    "typescript": "^5.1.6",
+    "vite": "^4.4.5"
+  },
+  "build": {
+    "appId": "com.activity.analytics",
+    "productName": "Activity Analytics",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico"
+    },
+    "files": [
+      "dist/**/*",
+      "native/x64/Release/monitor.dll",
+      "native/x64/Release/monitor.exe"
+    ]
+  }
+}
