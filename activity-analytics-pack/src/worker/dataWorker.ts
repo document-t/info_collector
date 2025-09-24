@@ -22,7 +22,7 @@ parentPort!.once('message', (msg) => {
         mouse INTEGER,
         dB REAL
       )
-    `).run();
+    `)。run();
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_timestamp ON system_data(timestamp)`).run();
 
     parentPort!.postMessage('ready');
@@ -31,7 +31,7 @@ parentPort!.once('message', (msg) => {
 
 /* ---------- 2. 批量插入 ---------- */
 parentPort!.on('message', (rows: any[]) => {
-  if (!db || !Array.isArray(rows)) return; // 非数组直接忽略
+  if (!db || !Array.isArray(rows)) return;
 
   const stmt = db.prepare(`INSERT INTO system_data (timestamp, pid, title, exe, cpu, mem, kb, mouse, dB) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   const tx = db.transaction((list: any[]) => {
