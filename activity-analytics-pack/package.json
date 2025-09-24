@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Electron + Native DLL system monitoring hybrid application",
   "main": "dist/main/index.js",
+  
   "scripts": {
     "dev": "npm run copy-worker && concurrently \"cross-env NODE_ENV=development electron-vite dev\"",
     "build": "npm run copy-worker && electron-vite build && electron-builder",
@@ -12,11 +13,13 @@
     "sign": "node scripts/sign.js",
     "copy-worker": "node scripts/copy-worker.js"
   },
+  
   "dependencies": {
     "better-sqlite3": "12.2.0",
     "electron-log": "^4.4.8",
     "lodash": "^4.17.21"
   },
+  
   "devDependencies": {
     "@fortawesome/fontawesome-free": "^7.0.1",
     "@types/better-sqlite3": "^7.6.4",
@@ -36,12 +39,14 @@
     "typescript": "^5.1.6",
     "vite": "^5.4.0"
   },
+  
   "build": {
     "appId": "com.activity.analytics",
     "productName": "Activity Analytics",
     "directories": {
       "output": "dist"
     },
+    
     "win": {
       "target": [
         {
@@ -50,6 +55,7 @@
             "x64"
           ]
         },
+        
         {
           "target": "portable",
           "arch": [
@@ -57,12 +63,15 @@
           ]
         }
       ],
+      
       "icon": "null"
     },
+    
     "nsis": {
       "oneClick": false,
       "perMachine": false
     },
+    
     "files": [
       "dist/**/*",
       "dist/worker/**/*",
