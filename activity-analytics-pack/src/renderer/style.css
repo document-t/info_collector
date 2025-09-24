@@ -1,0 +1,10 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+@import '@fortawesome/fontawesome-free/css/all.min.css';
+
+@layer components {
+  .stat-card {
+    @apply bg-white rounded-lg p-4 shadow hover:shadow-lg transition-shadow;
+  }
+}

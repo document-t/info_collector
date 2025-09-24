@@ -4,25 +4,37 @@
   "description": "Electron + Native DLL system monitoring hybrid application",
   "main": "dist/main/index.js",
   "scripts": {
-    "dev": "electron-vite dev",
-    "build": "electron-vite build && electron-builder",
-    "dll": "cd native && msbuild monitor.sln /p:Configuration=Release /p:Platform=x64 && cd ..",
-    "start": "npm run dll && electron .",
-    "sign": "node scripts/sign.js"
+    "dev": "npm run copy-worker && concurrently \"cross-env NODE_ENV=development electron-vite dev\"",
+    "build": "npm run copy-worker && electron-vite build && electron-builder",
+    "rebuild": "electron-rebuild -f -w better-sqlite3",
+    "dll": "cd native && cmake -B build -G \"Visual Studio 16 2019\" -A x64 && cmake --build build --config Release && cd ..",
+    "start": "npm run rebuild && electron .",
+    "sign": "node scripts/sign.js",
+    "copy-worker": "node scripts/copy-worker.js"
   },
   "dependencies": {
-    "better-sqlite3": "^8.6.0",
-    "electron-log": "^4.4.8"
+    "better-sqlite3": "12.2.0",
+    "electron-log": "^4.4.8",
+    "lodash": "^4.17.21"
   },
   "devDependencies": {
+    "@fortawesome/fontawesome-free": "^7.0.1",
     "@types/better-sqlite3": "^7.6.4",
+    "@types/lodash": "^4.17.20",
     "@types/node": "^18.17.1",
-    "@vitejs/plugin-vue": "^4.2.3",
-    "electron": "^25.8.1",
+    "@vitejs/plugin-vue": "^4.6.2",
+    "autoprefixer": "^10.4.21",
+    "chart.js": "^4.5.0",
+    "concurrently": "^7.6.0",
+    "cross-env": "^7.0.3",
+    "electron": "^27.3.11",
     "electron-builder": "^24.6.4",
-    "electron-vite": "^1.0.27",
+    "electron-rebuild": "^3.2.9",
+    "electron-vite": "^4.0.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.17",
     "typescript": "^5.1.6",
-    "vite": "^4.4.5"
+    "vite": "^5.4.0"
   },
   "build": {
     "appId": "com.activity.analytics",
@@ -34,25 +46,28 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         },
         {
           "target": "portable",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
-      "icon": "build/icon.ico"
+      "icon": "null"
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "installerIcon": "build/icon.ico",
-      "uninstallerIcon": "build/icon.ico"
+      "perMachine": false
     },
     "files": [
       "dist/**/*",
-      "native/x64/Release/monitor.dll",
-      "native/x64/Release/monitor.exe"
+      "dist/worker/**/*",
+      "native/x64/Release/monitor.exe",
+      "node_modules/better-sqlite3/**/*"
     ]
   }
 }

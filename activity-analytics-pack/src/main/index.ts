@@ -1,122 +1,69 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import log from 'electron-log';
 import { startPipeServer } from './pipeServer';
 import { SystemController } from './systemController';
-import * as childProcess from 'child_process';
-import * as path from 'path';
-import log from 'electron-log';
+import throttle from 'lodash/throttle';
 
-// 配置日志
+const __dirname = dirname(fileURLToPath(import.meta.url));
 log.transports.file.level = 'info';
 
 let mainWindow: BrowserWindow | null = null;
-let monitorProcess: childProcess.ChildProcess | null = null;
+let monitorProcess: any = null;
 const systemController = new SystemController();
 
-// 启动监控DLL进程
+app.disableHardwareAcceleration();   // 禁用 GPU 加速
+app.commandLine.appendSwitch('disable-gpu-sandbox');
+function getMonitorPath() {
+  const arch = process.arch === 'x64' ? 'x64' : 'x86';
+  return join(__dirname, `../../native/${arch}/Release/monitor.exe`);
+}
+
 function startMonitorProcess() {
-  const dllPath = process.env.NODE_ENV === 'development'
-    ? path.join(__dirname, '../../native/x64/Release/monitor.exe')
-    : path.join(process.resourcesPath, 'native/x64/Release/monitor.exe');
-  
-  log.info(`Starting monitor process from: ${dllPath}`);
-  
-  monitorProcess = childProcess.spawn(dllPath);
-  
-  monitorProcess.on('error', (err) => {
-    log.error('Failed to start monitor process:', err);
-  });
-  
-  monitorProcess.on('exit', (code) => {
-    log.info(`Monitor process exited with code: ${code}`);
-    // 如果不是主动关闭，尝试重启
+  const monitorPath = getMonitorPath();
+  log.info(`Starting monitor from: ${monitorPath}`);
+  monitorProcess = require('child_process').spawn(monitorPath, [], { stdio: 'ignore' });
+  monitorProcess.on('error', (err: any) => log.error('Monitor spawn error:', err));
+  monitorProcess.on('exit', (code: number | null) => {
+    log.info(`Monitor exited: ${code}`);
     if (code !== 0 && !app.isQuitting) {
       setTimeout(startMonitorProcess, 1000);
     }
   });
 }
 
-// 停止监控进程
 function stopMonitorProcess() {
   if (monitorProcess) {
-    log.info('Stopping monitor process');
     monitorProcess.kill();
     monitorProcess = null;
   }
 }
 
-// 创建主窗口
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
-    webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
-      nodeIntegration: false,
-      contextIsolation: true
-    },
-    title: 'Activity Analytics'
+    width: 1200, height: 800,
+    webPreferences: { preload: join(__dirname, '../preload/index.js'), contextIsolation: true }
   });
-
-  // 加载渲染进程
-  if (process.env.NODE_ENV === 'development') {
-    mainWindow.loadURL('http://localhost:5173');
-    mainWindow.webContents.openDevTools();
-  } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
-  }
-
-  // 窗口关闭事件
-  mainWindow.on('closed', () => {
-    mainWindow = null;
-  });
-
-  // 注册IPC事件
-  ipcMain.on('toggle-monitor', (_, enable: boolean) => {
-    if (enable && !monitorProcess) {
-      startMonitorProcess();
-    } else if (!enable && monitorProcess) {
-      stopMonitorProcess();
-    }
-  });
+  mainWindow.loadURL(process.env.NODE_ENV === 'development' ? 'http://localhost:5173' : join(__dirname, '../renderer/index.html'));
+  mainWindow.on('closed', () => (mainWindow = null));
+  ipcMain.on('toggle-monitor', (_, enable) => (enable ? startMonitorProcess() : stopMonitorProcess()));
+  mainWindow.webContents.once('dom-ready', startMonitorProcess);
 }
 
-// 应用就绪后创建窗口
 app.whenReady().then(() => {
   createWindow();
-  
-  // 启动管道服务器
   startPipeServer(systemController);
-  
-  // 当系统准备就绪且窗口未创建时创建窗口
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
-  });
-  
-  // 启动监控进程
-  startMonitorProcess();
+  app.on('activate', () => !BrowserWindow.getAllWindows().length && createWindow());
 });
 
-// 所有窗口关闭时退出应用
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    stopMonitorProcess();
-    app.quit();
-  }
-});
-
-// 应用退出前清理
+app.on('window-all-closed', () => (process.platform !== 'darwin' && app.quit()));
 app.on('before-quit', () => {
-  app.isQuitting = true;
   stopMonitorProcess();
   systemController.closeDatabase();
 });
 
-// 转发数据到渲染进程
-systemController.on('data', (data) => {
-  if (mainWindow && mainWindow.webContents) {
-    mainWindow.webContents.send('realtime', data);
-  }
-});
+/* 1 秒最多一次转发前端 */
+systemController.on('data', throttle((rows) => {
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('realtime', rows);
+}, 1000));

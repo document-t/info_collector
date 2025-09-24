@@ -1,327 +1,50 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Activity Analytics</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            primary: '#3B82F6',
-            secondary: '#10B981',
-            accent: '#8B5CF6',
-            dark: '#1E293B',
-            light: '#F8FAFC'
-          },
-          fontFamily: {
-            sans: ['Inter', 'system-ui', 'sans-serif'],
-          },
-        },
-      }
-    }
-  </script>
-  <style type="text/tailwindcss">
-    @layer utilities {
-      .content-auto {
-        content-visibility: auto;
-      }
-      .card-shadow {
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-      }
-      .stat-card {
-        @apply bg-white rounded-lg p-4 card-shadow transition-all duration-300 hover:shadow-lg;
-      }
-    }
-  </style>
-</head>
-<body class="bg-gray-50 text-dark min-h-screen">
-  <header class="bg-white shadow-sm fixed top-0 left-0 right-0 z-10">
-    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-      <div class="flex items-center space-x-2">
-        <i class="fa fa-bar-chart text-primary text-2xl"></i>
+  <style>body{margin:0;font-family:system-ui;background:#f8fafc;}</style>
+  </head>
+
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen transition-colors">
+  <!-- 顶部栏 -->
+  <header class="sticky top-0 z-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur shadow">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <i class="fa fa-chart-line text-blue-500 text-2xl"></i>
         <h1 class="text-xl font-bold">Activity Analytics</h1>
       </div>
-      <div class="flex items-center space-x-4">
-        <button id="monitorToggle" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors">
-          <i class="fa fa-pause mr-1"></i> Pause
+      <div class="flex items-center gap-3">
+        <button id="themeToggle" class="px-3 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 hover:opacity-80 transition" title="切换主题">
+          <i class="fa fa-sun text-yellow-500 dark:hidden"></i><i class="fa fa-moon text-blue-400 hidden dark:inline"></i>
+        </button>
+        <button id="monitorToggle" class="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white transition">
+          <i class="fa fa-pause mr-2"></i><span>暂停</span>
         </button>
       </div>
     </div>
   </header>
 
-  <main class="container mx-auto px-4 pt-20 pb-10">
-    <!-- 状态卡片 -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <div class="stat-card">
-        <div class="text-sm text-gray-500 mb-1">Active Window</div>
-        <div id="activeWindow" class="text-lg font-semibold truncate">Loading...</div>
-      </div>
-      <div class="stat-card">
-        <div class="text-sm text-gray-500 mb-1">CPU Usage</div>
-        <div class="flex items-center">
-          <span id="cpuUsage" class="text-lg font-semibold">0</span>
-          <span class="ml-1">%</span>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="text-sm text-gray-500 mb-1">Memory Usage</div>
-        <div class="flex items-center">
-          <span id="memoryUsage" class="text-lg font-semibold">0</span>
-          <span class="ml-1">MB</span>
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="text-sm text-gray-500 mb-1">Input Activity</div>
-        <div class="flex items-center">
-          <span id="inputActivity" class="text-lg font-semibold">0</span>
-          <span class="ml-1">events/sec</span>
-        </div>
-      </div>
-    </div>
+  <!-- 实时卡片 -->
+  <main class="max-w-7xl mx-auto px-4 py-6 grid gap-6">
+    <section class="grid grid-cols-2 md:grid-cols-4 gap-4" id="statCards"></section>
 
-    <!-- 图表区域 -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div class="bg-white rounded-lg p-4 card-shadow">
-        <h2 class="text-lg font-semibold mb-4">CPU & Memory Usage</h2>
-        <canvas id="systemChart" height="250"></canvas>
-      </div>
-      <div class="bg-white rounded-lg p-4 card-shadow">
-        <h2 class="text-lg font-semibold mb-4">Input Activity</h2>
-        <canvas id="inputChart" height="250"></canvas>
-      </div>
-    </div>
+    <!-- 图表 -->
+    <section class="grid md:grid-cols-2 gap-6">
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4"><h2 class="font-semibold mb-3">CPU & Memory</h2><canvas id="sysChart"></canvas></div>
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4"><h2 class="font-semibold mb-3">Input Events</h2><canvas id="inputChart"></canvas></div>
+    </section>
 
-    <!-- 进程列表 -->
-    <div class="mt-6 bg-white rounded-lg p-4 card-shadow">
-      <h2 class="text-lg font-semibold mb-4">Recent Processes</h2>
-      <div class="overflow-x-auto">
-        <table class="min-w-full">
-          <thead>
-            <tr class="bg-gray-50">
-              <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Process</th>
-              <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Window Title</th>
-              <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">CPU %</th>
-              <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Memory MB</th>
-              <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Last Active</th>
-            </tr>
-          </thead>
-          <tbody id="processTable">
-            <tr>
-              <td colspan="5" class="px-4 py-8 text-center text-gray-500">Waiting for data...</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <!-- 最近进程 -->
+    <section class="bg-white dark:bg-gray-800 rounded-xl shadow p-4">
+      <h2 class="font-semibold mb-3">Recent Processes</h2>
+      <div class="overflow-x-auto"><table class="min-w-full text-sm"><thead class="border-b dark:border-gray-700">
+        <tr><th class="text-left py-2">Process</th><th class="text-left py-2">Title</th><th class="text-left py-2">CPU %</th><th class="text-left py-2">Mem MB</th><th class="text-left py-2">Time</th></tr>
+      </thead><tbody id="processTable"></tbody></table></div>
+    </section>
   </main>
 
-  <script>
-    // 初始化图表
-    const systemCtx = document.getElementById('systemChart').getContext('2d');
-    const inputCtx = document.getElementById('inputChart').getContext('2d');
-    
-    // 图表数据配置
-    const timeLabels = [];
-    const cpuData = [];
-    const memoryData = [];
-    const keyboardData = [];
-    const mouseData = [];
-    
-    // 保持最后30个数据点
-    const MAX_DATA_POINTS = 30;
-    
-    // 创建系统资源图表
-    const systemChart = new Chart(systemCtx, {
-      type: 'line',
-      data: {
-        labels: timeLabels,
-        datasets: [
-          {
-            label: 'CPU Usage (%)',
-            data: cpuData,
-            borderColor: '#3B82F6',
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-            tension: 0.3,
-            fill: true
-          },
-          {
-            label: 'Memory Usage (MB)',
-            data: memoryData,
-            borderColor: '#10B981',
-            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-            tension: 0.3,
-            fill: true,
-            yAxisID: 'y1'
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: {
-            beginAtZero: true,
-            max: 100,
-            title: {
-              display: true,
-              text: 'CPU (%)'
-            }
-          },
-          y1: {
-            beginAtZero: true,
-            position: 'right',
-            title: {
-              display: true,
-              text: 'Memory (MB)'
-            },
-            grid: {
-              drawOnChartArea: false
-            }
-          },
-          x: {
-            ticks: {
-              maxTicksLimit: 5
-            }
-          }
-        }
-      }
-    });
-    
-    // 创建输入活动图表
-    const inputChart = new Chart(inputCtx, {
-      type: 'bar',
-      data: {
-        labels: timeLabels,
-        datasets: [
-          {
-            label: 'Keyboard',
-            data: keyboardData,
-            backgroundColor: '#8B5CF6'
-          },
-          {
-            label: 'Mouse',
-            data: mouseData,
-            backgroundColor: '#EC4899'
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: {
-            beginAtZero: true,
-            title: {
-              display: true,
-              text: 'Events'
-            }
-          },
-          x: {
-            ticks: {
-              maxTicksLimit: 5
-            }
-          }
-        }
-      }
-    });
-    
-    // 存储最近的进程信息
-    const recentProcesses = new Map();
-    
-    // 更新UI显示
-    function updateUI(data) {
-      // 更新状态卡片
-      document.getElementById('activeWindow').textContent = data.title || 'Unknown';
-      document.getElementById('cpuUsage').textContent = data.cpu.toFixed(1);
-      document.getElementById('memoryUsage').textContent = Math.round(data.mem);
-      document.getElementById('inputActivity').textContent = data.kb + data.mouse;
-      
-      // 添加新数据点到图表
-      const now = new Date();
-      const timeLabel = `${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-      
-      // 维护数据点数量
-      if (timeLabels.length >= MAX_DATA_POINTS) {
-        timeLabels.shift();
-        cpuData.shift();
-        memoryData.shift();
-        keyboardData.shift();
-        mouseData.shift();
-      }
-      
-      // 添加新数据
-      timeLabels.push(timeLabel);
-      cpuData.push(data.cpu);
-      memoryData.push(data.mem);
-      keyboardData.push(data.kb);
-      mouseData.push(data.mouse);
-      
-      // 更新图表
-      systemChart.update();
-      inputChart.update();
-      
-      // 更新进程列表
-      recentProcesses.set(data.pid, {
-        ...data,
-        lastActive: new Date().toLocaleTimeString()
-      });
-      
-      // 保持最多10个进程
-      if (recentProcesses.size > 10) {
-        const oldestPid = Array.from(recentProcesses.keys()).shift();
-        if (oldestPid) recentProcesses.delete(oldestPid);
-      }
-      
-      // 更新进程表格
-      const tableBody = document.getElementById('processTable');
-      tableBody.innerHTML = '';
-      
-      Array.from(recentProcesses.values()).sort((a, b) => 
-        new Date(b.lastActive).getTime() - new Date(a.lastActive).getTime()
-      ).forEach(process => {
-        const row = document.createElement('tr');
-        row.className = 'border-b border-gray-100 hover:bg-gray-50';
-        
-        const exeName = process.exe.split('\\').pop() || 'Unknown';
-        
-        row.innerHTML = `
-          <td class="px-4 py-3 text-sm">${exeName}</td>
-          <td class="px-4 py-3 text-sm truncate max-w-xs">${process.title}</td>
-          <td class="px-4 py-3 text-sm">${process.cpu.toFixed(1)}</td>
-          <td class="px-4 py-3 text-sm">${Math.round(process.mem)}</td>
-          <td class="px-4 py-3 text-sm">${process.lastActive}</td>
-        `;
-        
-        tableBody.appendChild(row);
-      });
-    }
-    
-    // 监控开关功能
-    let isMonitoring = true;
-    const monitorToggle = document.getElementById('monitorToggle');
-    
-    monitorToggle.addEventListener('click', () => {
-      isMonitoring = !isMonitoring;
-      window.electronAPI.toggleMonitor(isMonitoring);
-      
-      if (isMonitoring) {
-        monitorToggle.innerHTML = '<i class="fa fa-pause mr-1"></i> Pause';
-        monitorToggle.className = 'bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors';
-      } else {
-        monitorToggle.innerHTML = '<i class="fa fa-play mr-1"></i> Resume';
-        monitorToggle.className = 'bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors';
-      }
-    });
-    
-    // 接收实时数据
-    window.electronAPI.onRealtime((data) => {
-      updateUI(data);
-    });
-  </script>
+  <script type="module" src="./main.js"></script>
 </body>
 </html>
