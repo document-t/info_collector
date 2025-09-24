@@ -23,7 +23,6 @@ export function startPipeServer(controller: SystemController) {
         }
       }
     });
-
     
   });
 
