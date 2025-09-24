@@ -1,4 +1,5 @@
-﻿#include "monitor_hook.hpp"
+
+#include "monitor_hook.hpp"
 #include <atomic>
 
 std::atomic<DWORD> InputHook::kb{0};
