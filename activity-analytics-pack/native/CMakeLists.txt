@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 project(monitor LANGUAGES CXX)
 
-# 强制单配置，避免 Visual Studio 再套一层 Release\Release
+
 set(CMAKE_CONFIGURATION_TYPES Release)
 
 add_executable(monitor
