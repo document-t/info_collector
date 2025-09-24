@@ -80,13 +80,13 @@ const processMap = new Map();   // key = pid
 const MAX_PROCESS = 10;
 
 function updateTable(data) {
-  // 1. 以 pid 为键，永远保留最新
+  
   processMap.set(data.pid, data);
-  // 2. 按时间倒序 + 截取最近 10
+ 
   const list = Array.from(processMap.values())
                    .sort((a, b) => b.timestamp - a.timestamp)
                    .slice(0, MAX_PROCESS);
-  // 3. 一次渲染
+
   const html = list.map(d => `
     <tr class="border-b dark:border-gray-700">
       <td class="py-2">${d.exe.split('\\').pop()}</td>
