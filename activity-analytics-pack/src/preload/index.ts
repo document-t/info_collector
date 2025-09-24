@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
-// 定义暴露给前端的API类型
+
 interface ElectronAPI {
   onRealtime: (callback: (data: any) => void) => void;
   toggleMonitor: (enable: boolean) => void;
@@ -8,7 +8,7 @@ interface ElectronAPI {
 }
 
 // 安全地暴露API到全局
-contextBridge.exposeInMainWorld('electronAPI', {
+contextBridge。exposeInMainWorld('electronAPI', {
   onRealtime: (callback) => {
     ipcRenderer.on('realtime', (_, data) => callback(data));
   },
