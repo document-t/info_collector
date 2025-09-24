@@ -7,14 +7,14 @@ import { SystemController } from './systemController';
 import throttle from 'lodash/throttle';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-log.transports.file.level = 'info';
+log。transports。file.level = 'info';
 
 let mainWindow: BrowserWindow | null = null;
 let monitorProcess: any = null;
 const systemController = new SystemController();
 
-app.disableHardwareAcceleration();   // 禁用 GPU 加速
-app.commandLine.appendSwitch('disable-gpu-sandbox');
+app。disableHardwareAcceleration();   // 禁用 GPU 加速
+app。commandLine.appendSwitch('disable-gpu-sandbox');
 function getMonitorPath() {
   const arch = process.arch === 'x64' ? 'x64' : 'x86';
   return join(__dirname, `../../native/${arch}/Release/monitor.exe`);
@@ -63,7 +63,7 @@ app.on('before-quit', () => {
   systemController.closeDatabase();
 });
 
-/* 1 秒最多一次转发前端 */
+
 systemController.on('data', throttle((rows) => {
   if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('realtime', rows);
 }, 1000));
