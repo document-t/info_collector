@@ -186,7 +186,7 @@ BOOL WINAPI Handler(DWORD ctrl)
 	return FALSE;
 }
 
-/* ---------- 后台消息泵（永不 Sleep） ---------- */
+/* ---------- 后台消息泵 ---------- */
 void MessagePumpWorker()
 {
 	while (isRunning) {
