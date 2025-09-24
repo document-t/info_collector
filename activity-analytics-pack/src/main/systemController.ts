@@ -20,8 +20,8 @@ export class SystemController extends EventEmitter {
   private dbPath = join(app.getPath('userData'), 'activity.db');
   private worker = new Worker(join(__dirname, 'worker/dataWorker.js'));
   private saveQueue: SystemData[] = [];
-  public getSaveQueue() { return this.saveQueue.splice(0); }
-
+  public getSaveQueue() { return this.saveQueue.splice(0);
+   }
   constructor() {
     super();
     this.worker.once('message', () => log.info('Worker ready'));
